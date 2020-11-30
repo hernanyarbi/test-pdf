@@ -1,19 +1,16 @@
 package com.mkyong.hashing;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 
-import java.io.InputStreamReader;
 import org.apache.pdfbox.cos.COSArray;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,12 +37,44 @@ import org.apache.pdfbox.pdmodel.interactive.form.PDTextField;
 public class App {
     public static void main(String[] args) throws IOException {
 
-        PDDocument pdfDocument;
-        try {
-            pdfDocument = PDDocument.load(new File("/home/work/Documents/Personal/INFAR/2011001768.pdf"));
+        //PDDocument pdfDocument;
 
-            PDPage blankPage = new PDPage();
-            pdfDocument.addPage(blankPage); // agregamos una pagina alpdf
+        try {
+            String DirContrato = "/home/pablo/Documentos/test-pdf/2011001768.pdf";
+            String DirAnexo = "/home/pablo/Documentos/test-pdf/dibujo.pdf";
+
+            URL doc = new URL("https://github.com/pblarismendi/others/raw/main/2011001768.pdf");
+
+            InputStream in = doc.openStream();
+            FileOutputStream Document = new FileOutputStream(new File(DirContrato));
+
+            int length = -1;
+            byte[] buffer = new byte[10240];// buffer for portion of data from connection
+            while ((length = in.read(buffer)) > -1) {
+                Document.write(buffer, 0, length);
+            }
+            Document.close();
+            in.close();
+
+            URL anexo = new URL("https://github.com/pblarismendi/others/raw/main/dibujo.pdf");
+
+            in = anexo.openStream();
+            FileOutputStream anexo1 = new FileOutputStream(new File(DirAnexo));
+
+            length = -1;
+            buffer = new byte[10240];// buffer for portion of data from connection
+            while ((length = in.read(buffer)) > -1) {
+                anexo1.write(buffer, 0, length);
+            }
+            anexo1.close();
+            in.close();
+
+            PDDocument pdfDocument;
+            PDDocument file2;
+            pdfDocument = PDDocument.load(new File(DirContrato));
+            file2 = PDDocument.load(new File(DirAnexo));
+            //PDPage blankPage = new PDPage();
+            //pdfDocument.addPage(blankPage); // agregamos una pagina alpdf
 
             PDDocumentCatalog docCatalog = pdfDocument.getDocumentCatalog();
             PDAcroForm acroForm = docCatalog.getAcroForm();
@@ -60,14 +89,15 @@ public class App {
 
             PDFMergerUtility pdfMerger = new PDFMergerUtility();
 
-            InputStream inpdf = new URL("http://www.jossoft.com.ar/ARCHIVOS/DolarHistorico.pdf").openStream();
-            //File file1 = new File("/home/work/Documents/Personal/INFAR/2011001768.pdf");
-            //pdfMerger.addSource(file1);
-            pdfMerger.addSource(inpdf);
-            pdfMerger.setDestinationFileName("/home/work/Documents/Personal/INFAR/2011001768.pdf");
+            //InputStream inpdf = new URL("http://www.jossoft.com.ar/ARCHIVOS/DolarHistorico.pdf").openStream();
+            File file1 = new File(DirContrato);
+            pdfMerger.addSource(file1);
+            //pdfMerger.addSource(inpdf);
+            pdfMerger.setDestinationFileName(DirContrato);
             // merge documents
-            // pdfMerger.mergeDocuments(null);
+            //pdfMerger.mergeDocuments(null);
             pdfMerger.mergeDocuments(MemoryUsageSetting.setupMainMemoryOnly());
+            pdfMerger.appendDocument(pdfDocument, file2);
             System.out.println("PDF Documents merged to a single file");
 
             PDField field = acroForm.getField("firma");
@@ -122,7 +152,7 @@ public class App {
 
             rellenarCampo(acroForm, "ciudadExp", "ciudad expp");
 
-            pdfDocument.save("/home/work/Documents/Personal/INFAR/2011001768.pdf");
+            pdfDocument.save(DirContrato);
             pdfDocument.close();
 
         } catch (IOException e) {
